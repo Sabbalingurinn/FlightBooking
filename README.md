@@ -14,7 +14,9 @@ The APIs are split into FlightAPI and BookingAPI, but run as one service (Contro
 
 # How to run
 
-To run the code you must start by mvn clean compile and then mvn exec:java
+To run the code: 
+1. Run mvn clean compile
+2. Run mvn exec:java
 
 ---
 ## BookingAPI Documentation
