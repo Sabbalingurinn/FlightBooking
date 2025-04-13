@@ -4,6 +4,10 @@
 Jakob Stefán Ívarsson - jakobstefan04 (), Óskar Víkingur Davíðsson - skarihacks (ovd2@hi.is), Sævar Breki Snorrason - Sabbalingurinn (sbs87@hi.is) og Viktor Óli Bjarkason - viktorob (vob7@hi.is)
 
 
+
+We used the MVC architecture but decided to also implement an API layer that overlays the controllers.
+To showcase the functionality we then built a simple web "app" (using html and inline js).
+
 The APIs are split into FlightAPI and BookingAPI, but run as one service (ControllerAPI)
 
 # ControllerAPI Documentation
