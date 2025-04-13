@@ -8,6 +8,10 @@ The APIs are split into FlightAPI and BookingAPI, but run as one service (Contro
 
 # ControllerAPI Documentation
 
+# How to run
+
+To run the code you must start by mvn clean compile and then mvn exec:java
+
 ---
 ## BookingAPI Documentation
 
