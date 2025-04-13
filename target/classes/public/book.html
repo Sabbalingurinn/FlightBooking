@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book a Flight</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        nav { margin-bottom: 20px; }
+        nav a { margin-right: 10px; text-decoration: none; color: blue; }
+        form { max-width: 500px; }
+        label { display: block; margin: 10px 0 5px; }
+        input, select { width: 100%; padding: 8px; margin-bottom: 10px; }
+        button { padding: 10px 20px; background-color: #4CAF50; color: white; border: none; cursor: pointer; }
+        button:hover { background-color: #45a049; }
+        #message { margin-top: 20px; color: green; }
+        #error { margin-top: 20px; color: red; }
+    </style>
+</head>
+<body>
+<nav>
+    <a href="index.html">Flights</a>
+    <a href="book.html">Book Flight</a>
+    <a href="bookings.html">Bookings</a>
+</nav>
+<h1>Book a Flight</h1>
+<form id="bookingForm">
+    <label for="bookingId">Booking ID</label>
+    <input type="text" id="bookingId" required>
+
+    <label for="travelerSsn">Traveler SSN</label>
+    <input type="text" id="travelerSsn" required>
+
+    <label for="flightNumber">Flight Number</label>
+    <input type="text" id="flightNumber" required>
+
+    <label for="seatNumber">Seat Number</label>
+    <input type="text" id="seatNumber" required>
+
+    <label for="hasPriorityBoarding">Priority Boarding</label>
+    <select id="hasPriorityBoarding">
+        <option value="true">Yes</option>
+        <option value="false">No</option>
+    </select>
+
+    <label for="hasOnboardMeal">Onboard Meal</label>
+    <select id="hasOnboardMeal">
+        <option value="true">Yes</option>
+        <option value="false">No</option>
+    </select>
+
+    <label for="hasExtraLuggage">Extra Luggage</label>
+    <select id="hasExtraLuggage">
+        <option value="true">Yes</option>
+        <option value="false">No</option>
+    </select>
+
+    <label for="flightPrice">Flight Price</label>
+    <input type="number" id="flightPrice" step="0.01" required>
+
+    <button type="submit">Book Flight</button>
+</form>
+<div id="message"></div>
+<div id="error"></div>
+
+<script>
+    async function checkFlightExists(flightNumber) {
+        try {
+            const response = await fetch('/api/flights');
+            if (!response.ok) throw new Error('Failed to fetch flights');
+            const flights = await response.json();
+            return flights.some(flight => flight.flightNumber === flightNumber);
+        } catch (error) {
+            console.error('Fetch flights error:', error);
+            return false;
+        }
+    }
+
+    document.getElementById('bookingForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const flightNumber = document.getElementById('flightNumber').value;
+
+        // Athuga hvort flightNumber sé til
+        const flightExists = await checkFlightExists(flightNumber);
+        if (!flightExists) {
+            document.getElementById('error').textContent = 'Error: Flight number does not exist.';
+            document.getElementById('message').textContent = '';
+            return;
+        }
+
+        const bookingData = {
+            bookingId: document.getElementById('bookingId').value,
+            travelerSsn: document.getElementById('travelerSsn').value,
+            flightNumber: flightNumber,
+            seatNumber: document.getElementById('seatNumber').value,
+            hasPriorityBoarding: document.getElementById('hasPriorityBoarding').value === 'true',
+            hasOnboardMeal: document.getElementById('hasOnboardMeal').value === 'true',
+            hasExtraLuggage: document.getElementById('hasExtraLuggage').value === 'true',
+            flightPrice: parseFloat(document.getElementById('flightPrice').value)
+        };
+
+        try {
+            const response = await fetch('/api/bookings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(bookingData)
+            });
+
+            const responseText = await response.text();
+            if (response.status === 201) {
+                document.getElementById('message').textContent = 'Booking created successfully!';
+                document.getElementById('error').textContent = '';
+                document.getElementById('bookingForm').reset();
+            } else {
+                document.getElementById('error').textContent = `Failed to create booking: ${responseText || 'Unknown error'}`;
+                document.getElementById('message').textContent = '';
+            }
+        } catch (error) {
+            document.getElementById('error').textContent = `Error: ${error.message}`;
+            document.getElementById('message').textContent = '';
+        }
+    });
+</script>
+</body>
+</html>

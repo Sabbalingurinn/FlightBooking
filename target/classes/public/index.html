@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flights</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        nav { margin-bottom: 20px; }
+        nav a { margin-right: 10px; text-decoration: none; color: blue; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .filter { margin-bottom: 20px; }
+        .filter select, .filter button { margin-right: 10px; padding: 5px; }
+        .filter input { width: 300px; }
+    </style>
+</head>
+<body>
+<nav>
+    <a href="index.html">Flights</a>
+    <a href="book.html">Book Flight</a>
+    <a href="bookings.html">Bookings</a>
+</nav>
+<h1>Available Flights</h1>
+<div class="filter">
+    <select id="filterType">
+        <option value="airline">Airline</option>
+        <option value="departure">Departure Date</option>
+        <option value="arrival">Arrival Date</option>
+    </select>
+    <input type="text" id="filterValue" placeholder="Enter filter value (e.g., AirIceland, 2025-04-13)">
+    <button onclick="applyFilter()">Apply Filter</button>
+    <button onclick="resetFilter()">Reset</button>
+</div>
+<table id="flightsTable">
+    <thead>
+    <tr>
+        <th>Flight Number</th>
+        <th>Airline</th>
+        <th>From</th>
+        <th>To</th>
+        <th>Departure</th>
+        <th>Arrival</th>
+        <th>Price</th>
+    </tr>
+    </thead>
+    <tbody id="flightsBody"></tbody>
+</table>
+
+<script>
+    async function fetchFlights(filterType = '', filterValue = '') {
+        let url = '/api/flights';
+        if (filterType && filterValue) url += `?filter=${filterType}&filter_values=${filterValue}`;
+        try {
+            const response = await fetch(url);
+            if (!response.ok) throw new Error('API error');
+            const flights = await response.json();
+            displayFlights(flights);
+        } catch (error) {
+            console.error('Fetch error:', error);
+        }
+    }
+
+    function formatDate(dateStr) {
+        if (!dateStr) return 'N/A';
+        // Breyta "yyyy-MM-dd HH:mm" í "yyyy-MM-ddTHH:mm:ss"
+        const formatted = dateStr.replace(' ', 'T') + ':00';
+        const date = new Date(formatted);
+        return date.toString() !== 'Invalid Date' ? date.toLocaleString() : 'N/A';
+    }
+
+    function displayFlights(flights) {
+        const tbody = document.getElementById('flightsBody');
+        tbody.innerHTML = '';
+        flights.forEach(flight => {
+            const depStr = formatDate(flight.departureDateTime);
+            const arrStr = formatDate(flight.arrivalDateTime);
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${flight.flightNumber || 'N/A'}</td>
+                <td>${flight.airline || 'N/A'}</td>
+                <td>${flight.srcAirport || 'N/A'}</td>
+                <td>${flight.destAirport || 'N/A'}</td>
+                <td>${depStr}</td>
+                <td>${arrStr}</td>
+                <td>${flight.price != null ? flight.price.toFixed(2) : 'N/A'}</td>
+            `;
+            tbody.appendChild(row);
+        });
+    }
+
+    async function applyFilter() {
+        const filterType = document.getElementById('filterType').value;
+        const filterValue = document.getElementById('filterValue').value;
+        await fetchFlights(filterType, filterValue);
+    }
+
+    async function resetFilter() {
+        document.getElementById('filterValue').value = '';
+        await fetchFlights();
+    }
+
+    fetchFlights();
+</script>
+</body>
+</html>

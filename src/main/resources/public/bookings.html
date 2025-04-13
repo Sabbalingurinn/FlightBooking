@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bookings</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        nav { margin-bottom: 20px; }
+        nav a { margin-right: 10px; text-decoration: none; color: blue; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        button { padding: 5px 10px; background-color: #ff4444; color: white; border: none; cursor: pointer; }
+        button:hover { background-color: #cc0000; }
+    </style>
+</head>
+<body>
+<nav>
+    <a href="index.html">Flights</a>
+    <a href="book.html">Book Flight</a>
+    <a href="bookings.html">Bookings</a>
+</nav>
+<h1>All Bookings</h1>
+<table id="bookingsTable">
+    <thead>
+    <tr>
+        <th>Booking ID</th>
+        <th>Traveler SSN</th>
+        <th>Flight Number</th>
+        <th>Seat Number</th>
+        <th>Priority Boarding</th>
+        <th>Onboard Meal</th>
+        <th>Extra Luggage</th>
+        <th>Price</th>
+        <th>Action</th>
+    </tr>
+    </thead>
+    <tbody id="bookingsBody"></tbody>
+</table>
+
+<script>
+    async function fetchFlights() {
+        try {
+            const response = await fetch('/api/flights');
+            if (!response.ok) {
+                console.error('API error fetching flights:', response.status, response.statusText);
+                return {};
+            }
+            const flights = await response.json();
+            // Búa til kort af flight_number til price
+            const flightPriceMap = {};
+            flights.forEach(flight => {
+                flightPriceMap[flight.flightNumber] = flight.price;
+            });
+            return flightPriceMap;
+        } catch (error) {
+            console.error('Fetch flights error:', error);
+            return {};
+        }
+    }
+
+    async function fetchBookings() {
+        try {
+            const response = await fetch('/api/bookings');
+            if (!response.ok) {
+                console.error('API error fetching bookings:', response.status, response.statusText);
+                return [];
+            }
+            const bookings = await response.json();
+            console.log('Fetched bookings:', bookings);
+            return bookings;
+        } catch (error) {
+            console.error('Fetch bookings error:', error);
+            return [];
+        }
+    }
+
+    async function displayBookings() {
+        const bookings = await fetchBookings();
+        const flightPriceMap = await fetchFlights();
+        const tbody = document.getElementById('bookingsBody');
+        tbody.innerHTML = '';
+        bookings.forEach(booking => {
+            const row = document.createElement('tr');
+            // Sækja verð út frá flight_number
+            const price = flightPriceMap[booking.flightNumber] != null
+                ? flightPriceMap[booking.flightNumber].toFixed(2)
+                : 'N/A';
+            row.innerHTML = `
+                <td>${booking.bookingId || 'N/A'}</td>
+                <td>${booking.travelerSsn || 'N/A'}</td>
+                <td>${booking.flightNumber || 'N/A'}</td>
+                <td>${booking.seatNumber || 'N/A'}</td>
+                <td>${booking.hasPriorityBoarding ? 'Yes' : 'No'}</td>
+                <td>${booking.hasOnboardMeal ? 'Yes' : 'No'}</td>
+                <td>${booking.hasExtraLuggage ? 'Yes' : 'No'}</td>
+                <td>${price}</td>
+                <td><button onclick="cancelBooking('${booking.bookingId || ''}')">Cancel</button></td>
+            `;
+            tbody.appendChild(row);
+        });
+    }
+
+    async function cancelBooking(bookingId) {
+        if (!bookingId) {
+            alert('Invalid booking ID');
+            return;
+        }
+        if (confirm('Are you sure you want to cancel this booking?')) {
+            try {
+                const response = await fetch(`/api/bookings/${bookingId}`, {
+                    method: 'DELETE'
+                });
+                if (response.ok) {
+                    alert('Booking cancelled successfully!');
+                    displayBookings();
+                } else {
+                    alert('Failed to cancel booking.');
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+    }
+
+    // Initial load
+    displayBookings();
+</script>
+</body>
+</html>
